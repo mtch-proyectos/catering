@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitud de Cotización | Catering y Eventos</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 500px;
+    }
+    .card h2 {
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-size: 1.5rem;
+    }
+    .card p {
+      color: #7f8c8d;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #34495e;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #3498db;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+    .row .form-group {
+      flex: 1;
+    }
+    button {
+      width: 100%;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    #mensaje {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .exito {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Solicitar Cotización</h2>
+    <p>Completa los datos de tu evento para enviarte una propuesta detallada.</p>
+
+    <form id="cotizacionForm">
+      <div class="form-group">
+        <label for="nombre">Nombre Completo *</label>
+        <input type="text" id="nombre" name="nombre" required placeholder="Ej. Maria Delgado">
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label for="email">Correo Electrónico *</label>
+          <input type="email" id="email" name="email" required placeholder="nombre@correo.com">
+        </div>
+        <div class="form-group">
+          <label for="telefono">Teléfono / WhatsApp *</label>
+          <input type="tel" id="telefono" name="telefono" required placeholder="Ej. 04143330099">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label for="fecha_evento">Fecha del Evento *</label>
+          <input type="date" id="fecha_evento" name="fecha_evento" required>
+        </div>
+        <div class="form-group">
+          <label for="cantidad_personas">N° Invitados *</label>
+          <input type="number" id="cantidad_personas" name="cantidad_personas" min="1" required placeholder="50">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo_evento">Tipo de Evento *</label>
+        <select id="tipo_evento" name="tipo_evento" required>
+          <option value="">Selecciona una opción...</option>
+          <option value="Matrimonio">Matrimonio</option>
+          <option value="Cumpleaños">Cumpleaños</option>
+          <option value="Corporativo">Corporativo</option>
+          <option value="Cena Especial">Cena Especial</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="resumen_solicitud">Detalles Adicionales / Menú</label>
+        <textarea id="resumen_solicitud" name="resumen_solicitud" rows="3" placeholder="Ej. Menú vegano, requerimientos especiales..."></textarea>
+      </div>
+
+      <button type="submit" id="btnSubmit">Enviar Solicitud</button>
+      <div id="mensaje"></div>
+    </form>
+  </div>
+
+  <script>
+  // URL de tu Webhook en n8n
+  const N8N_WEBHOOK_URL = 'https://tu-instancia-n8n.com/webhook/cotizacion-web';
+
+  const form = document.getElementById('cotizacionForm');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const mensajeDiv = document.getElementById('mensaje');
+
+  // Al cargar la página, lee los datos que la IA ya capturó en la URL
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Asignación segura de teléfono
+    if (urlParams.has('telefono')) {
+      document.getElementById('telefono').value = urlParams.get('telefono');
+    }
+
+    // Asignación de nombre (solo si no es texto por defecto de la IA)
+    if (urlParams.has('nombre') && urlParams.get('nombre') !== 'no existe' && urlParams.get('nombre') !== 'No proporcionado') {
+      document.getElementById('nombre').value = urlParams.get('nombre');
+    }
+
+    // Asignación de email solo si tiene un formato válido
+    if (urlParams.has('email') && urlParams.get('email').includes('@')) {
+      document.getElementById('email').value = urlParams.get('email');
+    }
+
+    // Asignación de fecha (solo si viene en formato YYYY-MM-DD)
+    if (urlParams.has('fecha') && /^\d{4}-\d{2}-\d{2}$/.test(urlParams.get('fecha'))) {
+      document.getElementById('fecha_evento').value = urlParams.get('fecha');
+    }
+
+    // Asignación de cantidad de personas
+    if (urlParams.has('personas') && !isNaN(parseInt(urlParams.get('personas')))) {
+      document.getElementById('cantidad_personas').value = urlParams.get('personas');
+    }
+
+    // Asignación de tipo de evento
+    if (urlParams.has('tipo')) {
+      document.getElementById('tipo_evento').value = urlParams.get('tipo');
+    }
+
+    // Asignación de menú/resumen
+    if (urlParams.has('menu')) {
+      document.getElementById('resumen_solicitud').value = urlParams.get('menu');
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando...';
+    mensajeDiv.style.display = 'none';
+
+    // Capturar los datos del formulario de manera limpia
+    const cantidadInput = document.getElementById('cantidad_personas').value;
+
+    const formData = {
+      nombre: document.getElementById('nombre').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      telefono: document.getElementById('telefono').value.trim(),
+      fecha_evento: document.getElementById('fecha_evento').value,
+      cantidad_personas: parseInt(cantidadInput) || 0,
+      tipo_evento: document.getElementById('tipo_evento').value,
+      resumen_solicitud: document.getElementById('resumen_solicitud').value.trim() || 'Sin detalles adicionales',
+      origen: 'Formulario Web'
+    };
+
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        mensajeDiv.className = 'exito';
+        mensajeDiv.textContent = '¡Gracias! Hemos recibido tus datos y te contactaremos pronto.';
+        mensajeDiv.style.display = 'block';
+        form.reset();
+      } else {
+        throw new Error('Error al enviar la solicitud.');
+      }
+    } catch (error) {
+      mensajeDiv.className = 'error';
+      mensajeDiv.textContent = 'Ocurrió un error al enviar. Por favor intente nuevamente.';
+      mensajeDiv.style.display = 'block';
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Enviar Solicitud';
+    }
+  });
+</script>
+</body>
+</html>
