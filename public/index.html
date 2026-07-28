@@ -145,8 +145,8 @@
         <label for="tipo_evento">Tipo de Evento *</label>
         <select id="tipo_evento" name="tipo_evento" required>
           <option value="">Selecciona una opción...</option>
-          <option value="Matrimonio">Matrimonio</option>
-          <option value="Cumpleaños">Cumpleaños</option>
+          <option value="Boda">Boda</option>
+          <option value="Cumpleanos">Cumpleaños</option>
           <option value="Corporativo">Corporativo</option>
           <option value="Cena Especial">Cena Especial</option>
           <option value="Otro">Otro</option>
@@ -154,8 +154,17 @@
       </div>
 
       <div class="form-group">
-        <label for="resumen_solicitud">Detalles Adicionales / Menú</label>
-        <textarea id="resumen_solicitud" name="resumen_solicitud" rows="3" placeholder="Ej. Menú vegano, requerimientos especiales..."></textarea>
+        <label for="tipoMenu">Tipo de menú especial:</label>
+        <select id="tipoMenu" name="tipoMenu">
+           <option value="estandar" selected>Ninguno (Estándar)</option>
+           <option value="vegano">Vegano</option>
+           <option value="celiaco">Celíaco / Sin Gluten</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="resumen_solicitud">Detalles Adicionales / Decoración</label>
+        <textarea id="resumen_solicitud" name="resumen_solicitud" rows="3" placeholder="Ej. Ambiente Rosa, requerimientos especiales..."></textarea>
       </div>
 
       <button type="submit" id="btnSubmit">Enviar Solicitud</button>
@@ -180,7 +189,7 @@
       document.getElementById('telefono').value = urlParams.get('telefono');
     }
 
-    // Asignación de nombre (solo si no es texto por defecto de la IA)
+    // Asignación de nombre (solo si no es texto por defecto)
     if (urlParams.has('nombre') && urlParams.get('nombre') !== 'no existe' && urlParams.get('nombre') !== 'No proporcionado') {
       document.getElementById('nombre').value = urlParams.get('nombre');
     }
@@ -205,9 +214,14 @@
       document.getElementById('tipo_evento').value = urlParams.get('tipo');
     }
 
+    // CORREGIDO: Asignación de tipo de menú (coincide con id="tipoMenu")
+    if (urlParams.has('tipomenu')) {
+      document.getElementById('tipoMenu').value = urlParams.get('tipomenu');
+    }
+
     // Asignación de menú/resumen
-    if (urlParams.has('menu')) {
-      document.getElementById('resumen_solicitud').value = urlParams.get('menu');
+    if (urlParams.has('notas')) {
+      document.getElementById('resumen_solicitud').value = urlParams.get('notas');
     }
   });
 
@@ -218,7 +232,6 @@
     btnSubmit.textContent = 'Enviando...';
     mensajeDiv.style.display = 'none';
 
-    // Capturar los datos del formulario de manera limpia
     const cantidadInput = document.getElementById('cantidad_personas').value;
 
     const formData = {
@@ -228,6 +241,8 @@
       fecha_evento: document.getElementById('fecha_evento').value,
       cantidad_personas: parseInt(cantidadInput) || 0,
       tipo_evento: document.getElementById('tipo_evento').value,
+      // CORREGIDO: id="tipoMenu"
+      tipoMenu: document.getElementById('tipoMenu').value, 
       resumen_solicitud: document.getElementById('resumen_solicitud').value.trim() || 'Sin detalles adicionales',
       origen: 'Formulario Web'
     };
